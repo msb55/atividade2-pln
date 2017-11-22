@@ -49,6 +49,21 @@ def filter_errors(trees):
     
     print("FIM FILTER ERRORS...", count)
 
+
+def make_list_evaluation(tree,list_eval,index):
+    simbol = tree.label()
+   
+    inicio = index;
+    if tree.height() > 2:
+        print(len(tree))
+        for i in range(0,len(tree)):
+            index = make_list_evaluation(tree[i],list_eval, index)
+            
+        list_eval += [(simbol, inicio, index)]
+        return index;
+    else:
+        return index+1;
+
 def do_cky(grammar):
     global test
 
@@ -58,6 +73,9 @@ def do_cky(grammar):
     
     sent = test[0].leaves()
     ssent = []
+    saida = []
+    list_eval_val = []
+    list_evel_test = []
     for s in sent:
         try:
             grammar.check_coverage([s])
@@ -66,7 +84,17 @@ def do_cky(grammar):
             ssent.append("UNK")
     print(ssent)
     for t in viterbi.parse(ssent):
-        print(t)
+        # print(t)
+        saida.append(t)
+    make_list_evaluation(saida[0][0],list_evel_test,0)
+    make_list_evaluation(test[0],list_eval_val,0)
+
+    print(saida[0])
+    print(test[0])
+    print(list_evel_test)
+    print(list_eval_val)
+    saida[0].draw()
+    test[0].draw()
 
     print("FINISH")
 
