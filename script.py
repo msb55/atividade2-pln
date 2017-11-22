@@ -3,6 +3,7 @@ from nltk import Nonterminal, Production, ProbabilisticProduction
 from nltk.corpus import floresta
 from nltk.grammar import PCFG, induce_pcfg
 from nltk.parse import pchart, ViterbiParser
+# import numpy as np
 
 nltk.download('floresta')
 
@@ -28,39 +29,34 @@ def filter_errors(trees):
     global productions
     global test
 
-    count = 0
     limite = int(len(trees)*0.75)
-
-    for i in range(0,limite):
+    count=0
+    for tree in trees[:limite]:
         try:
-            b = trees[i]
-            metodo(b)
-            b.chomsky_normal_form()
-            initial_symbols.append(b.productions()[0].lhs())
-            productions += b.productions()
+            metodo(tree)
+            initial_symbols.append(tree.productions()[0].lhs())
+            productions += tree.productions()
+            count +=1
         except AttributeError:
             pass
 
-    for i in range(limite, len(trees)):
+    for tree in trees[limite:]:
         try:
-            b = trees[i]
-            metodo(b)
-            b.chomsky_normal_form()
-            test.append(b)
+            metodo(tree)
+            test.append(tree)
         except AttributeError:
             pass
     
-    print("FIM FILTER ERRORS...")
+    print("FIM FILTER ERRORS...", count)
 
 def do_cky(grammar):
     global test
 
     print("CKY...",len(test))
-    # print(grammar)
+    
     viterbi = ViterbiParser(grammar)
-    # for i in test:
+    
     sent = test[0].leaves()
-    print(sent)
     ssent = []
     for s in sent:
         try:
@@ -86,8 +82,7 @@ for t in initial_symbols:
 productions += roots
 productions += [Production(Nonterminal("n"), ["UNK"])]
 
-# pcfg = get_pcfg(ROOT, productions)
-print("pcfg iniciado...")
+print("pcfg iniciado...", len(productions), len(test))
 pcfg = induce_pcfg(ROOT, productions)
 print("pcfg finalizado...")
 do_cky(pcfg)
