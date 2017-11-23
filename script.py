@@ -24,7 +24,7 @@ def metodo(tree):
             metodo(tree[i])
 
 def filter_errors(trees):
-    print("FILTER ERRORS...")
+    # print("FILTER ERRORS...")
     global initial_symbols
     global productions
     global test
@@ -47,23 +47,21 @@ def filter_errors(trees):
         except AttributeError:
             pass
     
-    print("FIM FILTER ERRORS...", count)
+    # print("FIM FILTER ERRORS...", count)
 
 
 def make_list_evaluation(tree,list_eval,list_tag,index):
-    simbol = tree.label()
-   
-    inicio = index;
+    simbol = tree.label()   
+    inicio = index
     if tree.height() > 2:
-        print(len(tree))
         for i in range(0,len(tree)):
             index = make_list_evaluation(tree[i],list_eval,list_tag, index)
             
         list_eval += [(simbol, inicio, index)]
-        return index;
+        return index
     else:
         list_tag[tree[0]] = simbol
-        return index+1;
+        return index+1
 
 def do_cky(grammar):
     global test
@@ -71,43 +69,64 @@ def do_cky(grammar):
     print("CKY...",len(test))
     
     viterbi = ViterbiParser(grammar)
-    
-    sent = test[0].leaves()
-    ssent = []
-    saida = []
-    list_eval_val = []
-    list_evel_test = []
-    list_tag_val = {}
-    list_tag_test = {}
-    for s in sent:
-        try:
-            grammar.check_coverage([s])
-            ssent.append(s)
-        except ValueError:
-            ssent.append("UNK")
-    print(ssent)
-    for t in viterbi.parse(ssent):
-        # print(t)
-        saida.append(t)
-    make_list_evaluation(saida[0][0],list_evel_test,list_tag_test,0)
-    make_list_evaluation(test[0],list_eval_val,list_tag_val, 0)
+    resultados = []
+    for t in test[30:1145]: # leo => [1145:]
+        sent = t.leaves()
 
-    print(saida[0])
-    print(test[0])
-    print(list_evel_test)
-    print(list_eval_val)
-    print(list_tag_val)
-    print(list_tag_test)
-    saida[0].draw()
-    test[0].draw()
+        ssent = []        
+        for s in sent:
+            try:
+                grammar.check_coverage([s])
+                ssent.append(s)
+            except ValueError:
+                ssent.append("UNK")
+        print(ssent)
 
+        saida = []
+        for t in viterbi.parse(ssent):
+            saida.append(t)
+
+        list_eval_val = []
+        list_eval_test = []
+        list_tag_val = {}
+        list_tag_test = {}
+        make_list_evaluation(saida[0][0],list_eval_test,list_tag_test,0)
+        make_list_evaluation(t[0],list_eval_val,list_tag_val, 0)    
+        
+        print('test',list_eval_test,'val')
+        acertos = len(set(list_eval_test).intersection(set(list_eval_val)))
+        # print('acertos',acertos)
+        # labeled precision
+        lp = acertos/len(list_eval_test)
+        # print('lp',lp)
+        # labeled recall
+        lr = acertos/len(list_eval_val)
+        # print('lr',lr)
+        # f1
+        f1 = 2*lp*lr/(lp+lr)
+        # print('f1',lr)
+        # tagging accuracy
+        ta = 0
+        for s in ssent:
+            if s == 'UNK':
+                pass
+            else: 
+                if list_tag_test[s] == list_tag_val[s]:
+                    ta += 1
+        ta /= len(sent)
+        # print('ta',ta)
+        r = {'lp':lp, 'lr': lr, 'f1':f1, 'ta':ta}
+        print('r',r)
+        resultados.append(r)
+
+    print(resultados)
     print("FINISH")
 
 filter_errors(floresta.parsed_sents())
 
 roots = []
 ROOT = Nonterminal('ROOT')
-print("adicionando simbolos iniciais")
+# print("adicionando simbolos iniciais")
 initial_symbols = list(set(initial_symbols)) # remover repetidos
 for t in initial_symbols:
     roots += [Production(ROOT,[t])]
@@ -115,7 +134,7 @@ for t in initial_symbols:
 productions += roots
 productions += [Production(Nonterminal("n"), ["UNK"])]
 
-print("pcfg iniciado...", len(productions), len(test))
+# print("pcfg iniciado...", len(productions), len(test))
 pcfg = induce_pcfg(ROOT, productions)
-print("pcfg finalizado...")
+# print("pcfg finalizado...")
 do_cky(pcfg)
